@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101820">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>กดตามจังหวะ</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#101820;--panel:#18242f;--ink:#f3efe6;--dim:#8a9aa8;--short:#ffd166;--long:#3ddbb0;--line:#ff5d8f;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html{touch-action:manipulation;-webkit-text-size-adjust:100%}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+input[type=range]{touch-action:pan-x}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Kanit',system-ui,sans-serif}
+main{max-width:900px;margin:0 auto;padding:16px}
+h1{font-size:1.6rem;font-weight:800;margin:4px 0 2px}
+p.sub{margin:0 0 12px;color:var(--dim)}
+.hud{display:flex;flex-wrap:wrap;gap:6px 20px;align-items:baseline;margin-bottom:8px}
+.hud b{font-size:1.9rem;font-weight:800;font-variant-numeric:tabular-nums}
+.hud span{color:var(--dim);font-size:.85rem;margin-right:4px}
+.stage{position:relative;background:var(--panel);border-radius:14px;overflow:hidden}
+canvas{display:block;width:100%;height:300px;touch-action:none}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(16,24,32,.88);text-align:center;padding:16px}
+.ov.hide{display:none}
+.ov h2{margin:0;font-size:1.5rem}
+.ov p{margin:0;color:var(--dim);max-width:46ch;line-height:1.5}
+button{font:inherit;font-weight:600;background:var(--long);color:#0b2a22;border:0;border-radius:10px;padding:10px 26px;cursor:pointer}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.pad{margin-top:12px;width:100%;height:72px;border-radius:14px;border:2px solid var(--dim);background:transparent;color:var(--dim);font-size:1.1rem;font-weight:600;touch-action:none;user-select:none}
+.pad.on{background:var(--line);border-color:var(--line);color:#fff}
+.cal{display:flex;align-items:center;gap:10px;margin-top:12px;color:var(--dim);font-size:.9rem}.cal input{flex:1;max-width:260px}.cal b{color:var(--ink);min-width:3ch;text-align:right}
+.cal select{font:inherit;background:var(--panel);color:var(--ink);border:2px solid var(--dim);border-radius:8px;padding:6px 10px}
+.alt{background:transparent;color:var(--ink);border:2px solid var(--dim)}button:disabled{opacity:.4;cursor:default}
+#tut{background:var(--panel);border-radius:14px;padding:16px}#tut canvas{width:100%;max-width:560px;height:auto;display:block;background:rgba(0,0,0,.25);border-radius:10px}
+#tut p{margin:10px 0 0;line-height:1.55;max-width:60ch}#tut p#t3{color:var(--dim)}.th{display:flex;gap:12px;align-items:baseline;margin-bottom:10px}#tt{font-size:1.5rem;font-weight:800;color:var(--short)}
+.tb{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.seg{display:flex;gap:8px}.seg button{background:var(--panel);color:var(--dim);border:2px solid var(--panel);padding:8px 24px}.seg button[aria-checked=true]{background:var(--long);color:#0b2a22;border-color:var(--long)}
+.leg{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin-top:14px}.leg div{background:var(--panel);border-radius:10px;padding:8px 6px;text-align:center;font-size:.78rem;color:var(--dim);line-height:1.3}.leg b{display:block;color:var(--ink);font-weight:600}.leg canvas{height:64px;width:56px;margin:0 auto 4px}
+.key{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;color:var(--dim);font-size:.85rem}
+.key i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+.rank{font-size:3.4rem;font-weight:800;line-height:1;color:var(--short)}
+@media (pointer:coarse){
+ main{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))}
+ .pad{position:fixed;left:0;right:0;bottom:0;width:100%;height:calc(100px + env(safe-area-inset-bottom,0px));margin:0;padding-bottom:env(safe-area-inset-bottom,0px);border-radius:18px 18px 0 0;background:var(--bg);z-index:5;font-size:1.2rem}
+ .pad.on{background:var(--line)}
+ button{min-height:44px}
+}
+@media (max-width:520px){h1{font-size:1.35rem}.hud b{font-size:1.5rem}.dsc{font-size:.85rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1>กดตามจังหวะ</h1>
+  <p class="sub" id="sub">โน้ตวิ่งมาจากขวา กด Space ตอนหัวโน้ตถึงเส้นชมพู ค้างไว้ตามความยาว แล้วปล่อยตอนท้ายโน้ตถึงเส้น</p>
+  <div class="hud"><div><span>คะแนน</span><b id="sc">0</b></div><div><span>คอมโบ</span><b id="cb">0</b></div><div><span>ความเร็ว</span><b id="bpm">80</b></div><div><span>คอร์ด</span><b id="gn" style="font-size:1.15rem">-</b></div><div><span>โน้ตต่อไป</span><b id="nx" style="font-size:1.15rem">-</b></div></div>
+  <div class="seg" id="dif" role="radiogroup" aria-label="ระดับความยาก"><button role="radio" data-d="easy">ง่าย</button><button role="radio" data-d="mid">กลาง</button><button role="radio" data-d="hard">ยาก</button></div>
+  <p class="sub" id="dsc" style="margin:8px 0 12px"></p>
+  <section id="tut" hidden>
+    <div class="th"><b id="tn"></b><span id="tt"></span></div>
+    <canvas id="demo" width="560" height="150"></canvas>
+    <p id="t1"></p><p id="t2"></p><p id="t3"></p>
+    <div class="tb"><button class="alt" id="tprev">ก่อนหน้า</button><button id="tprac">ลองฝึกโน้ตนี้</button><button class="alt" id="tnext">ถัดไป</button><button class="alt" id="tclose">กลับเมนู</button></div>
+  </section>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="ov" id="ov">
+      <h2 id="ovt">พร้อมไหม?</h2>
+      <div class="rank" id="rk" style="display:none"></div>
+      <p id="ovp">แถบสีด้านบนคือเวลาที่ต้องกด ส่วนสัญลักษณ์โน้ตบนเส้นด้านล่างคือโน้ตที่ต้องอ่าน (ตัวกลม ตัวขาว ตัวดำ เขบ็ต ทริปเล็ต และโน้ตประจุด) โน้ตและความเร็วจะสุ่มใหม่ทุกครั้งที่เริ่ม เลือกระดับความยากได้ด้านบน ห้องแรกง่ายเสมอ มีเสียงนับ 4 จังหวะก่อนเริ่ม</p>
+      <button id="go">เริ่มเล่น</button>
+      <button class="alt" id="nxt" hidden>บทต่อไป</button>
+      <button class="alt" id="tbtn">เรียนรู้ทีละโน้ต</button>
+    </div>
+  </div>
+  <label class="cal"><input type="checkbox" id="mus" checked> โหมดเพลงประกอบ (กลอง เบส และคอร์ดสุ่มใหม่ทุกรอบ เสียงที่กดจะเป็นโน้ตในคอร์ดนั้น)</label>
+  <label class="cal"><input type="checkbox" id="rnd" checked> สุ่มโน้ตทุกครั้ง (ปิดเพื่อเล่นเพลงฝึกที่ไล่จากง่ายไปยาก)</label>
+  <label class="cal">ชดเชยดีเลย์ <input type="range" id="off" min="-150" max="150" step="5"> <b id="offv">0</b> ms</label>
+  <button class="pad" id="pad">กด Space (หรือแตะที่นี่) ค้างตามความยาวโน้ต</button>
+  <div class="leg" id="leg"></div>
+  <div class="key"><span><i style="background:var(--short)"></i>โน้ตสั้น (แตะ)</span><span><i style="background:var(--long)"></i>โน้ตยาว (กดค้าง)</span><span><i style="background:var(--line)"></i>เส้นตัดสิน</span></div>
+</main>
+<script>
+const GAP=0.25, HITX=110, H=300, LANE=48, PXBEAT=172.5;
+let BPM=80, BEAT=60/BPM, SPEED=PXBEAT/BEAT;
+// [เริ่ม(จังหวะ), ความยาว(จังหวะ)]
+const T3=1/3;
+const CHART=[[0,1],[1,1],[2,2],[4,4],[8,3],[11,1],[12,1.5],[13.5,.5],[14,1],[15,1],
+[16,.5],[16.5,.5],[17,.5],[17.5,.5],[18,.5],[18.5,.5],[19,.5],[19.5,.5],
+[20,1],[21,T3],[21+T3,T3],[21+2*T3,T3],[22,2],
+[24,.25],[24.25,.25],[24.5,.25],[24.75,.25],[25,1],[26,.5],[26.5,.5],[27,1],
+[28,1.5],[29.5,.5],[30,2]];
+const KINDS={48:{n:'ตัวกลม',b:'4',h:0,s:0,f:0,d:0},36:{n:'ตัวขาวประจุด',b:'3',h:0,s:1,f:0,d:1},24:{n:'ตัวขาว',b:'2',h:0,s:1,f:0,d:0},18:{n:'ตัวดำประจุด',b:'1½',h:1,s:1,f:0,d:1},12:{n:'ตัวดำ',b:'1',h:1,s:1,f:0,d:0},6:{n:'เขบ็ตชั้นเดียว',b:'½',h:1,s:1,f:1,d:0},4:{n:'ทริปเล็ต (เขบ็ต 3 ตัว)',b:'⅓',h:1,s:1,f:1,d:0,t:1},3:{n:'เขบ็ตสองชั้น',b:'¼',h:1,s:1,f:2,d:0}};
+// สุ่มโน้ต: เติมทีละห้อง (4/4) จากชุดจังหวะที่ลงตัวกับเส้นจังหวะ
+const DIFFS={easy:{n:'ง่าย',bpm:[60,75],k:1.3,lv:1,d:'60–75 BPM · ตัวกลม ตัวขาว ตัวดำ เขบ็ตคู่ · ช่วงตัดสินกว้าง'},
+ mid:{n:'กลาง',bpm:[70,95],k:1,lv:2,d:'70–95 BPM · เพิ่มโน้ตประจุดและทริปเล็ต'},
+ hard:{n:'ยาก',bpm:[90,115],k:.8,lv:3,d:'90–115 BPM · เพิ่มเขบ็ตสองชั้น · ช่วงตัดสินแคบ'}};
+let DIF='mid',K=1;try{DIF=localStorage.getItem('dif')||'mid'}catch(e){}if(!DIFFS[DIF])DIF='mid';
+const CH=[
+ {l:[1],w:5,lv:1,easy:1,ok:o=>1},{l:[2],w:3,lv:1,easy:1,ok:o=>o%2==0},{l:[.5,.5],w:4,lv:1,ok:o=>1},
+ {l:[1.5,.5],w:2,lv:2,ok:o=>o<=2},{l:[3],w:1,lv:1,ok:o=>o<=1},{l:[4],w:1,lv:1,ok:o=>o==0,late:1},
+ {l:[.25,.25,.25,.25],w:1.5,lv:3,ok:o=>1},{l:[.5,.25,.25],w:1.5,lv:3,ok:o=>1},{l:[.25,.25,.5],w:1.5,lv:3,ok:o=>1},
+ {l:[T3,T3,T3],w:2,lv:2,ok:o=>1}];
+const WT=c=>c.w*(DIF==='hard'&&c.lv>1?2:1);
+function genChart(){const out=[];
+  for(let bar=0;bar<8;bar++){let off=0;
+    while(off<4-1e-9){
+      const opts=CH.filter(c=>{const len=c.l.reduce((a,b)=>a+b,0);return c.lv<=DIFFS[DIF].lv&&len<=4-off+1e-9&&c.ok(off)&&(bar>0||c.easy)&&(!c.late||bar>0)});
+      let x=Math.random()*opts.reduce((a,c)=>a+WT(c),0),pick=opts[0];
+      for(const c of opts){x-=WT(c);if(x<=0){pick=c;break}}
+      let pos=bar*4+off;for(const l of pick.l){out.push([pos,l]);pos+=l}off+=pick.l.reduce((a,b)=>a+b,0)}}
+  return out}
+function glyph(c,x,y,k,col,sc=1){c.save();c.strokeStyle=col;c.fillStyle=col;c.lineWidth=2*sc;
+  c.beginPath();c.ellipse(x,y,6.5*sc,4.6*sc,-.35,0,7);k.h?c.fill():c.stroke();
+  if(k.s){const sx=x+6*sc,top=y-32*sc;c.beginPath();c.moveTo(sx,y-1);c.lineTo(sx,top);c.stroke();
+    for(let i=0;i<k.f;i++){c.lineWidth=2.6*sc;c.beginPath();c.moveTo(sx,top+i*6*sc);c.quadraticCurveTo(sx+11*sc,top+8*sc+i*6*sc,sx+7*sc,top+18*sc+i*6*sc);c.stroke()}}
+  if(k.d){c.beginPath();c.arc(x+13*sc,y-3*sc,2*sc,0,7);c.fill()}
+  if(k.t){c.font='italic 600 '+13*sc+'px Kanit,sans-serif';c.textAlign='center';c.fillText('3',x+3*sc,y-38*sc)}
+  c.restore()}
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d');
+let W=800,notes=[],state='idle',t0=0,t=0,score=0,combo=0,maxScore=0,active=null,fb=null,lastBeat=-99,down=false,counts={};
+let ac=null,osc=null,og=null;
+
+function resize(){const d=devicePixelRatio||1;W=cv.clientWidth;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0)}
+addEventListener('resize',resize);resize();
+
+function build(){
+  notes=(LESSON!==null?LESSONS[LESSON].ch():$('rnd').checked?genChart():CHART).map(([s,l])=>{const st=s*BEAT,dur=Math.max(l*BEAT-GAP*BEAT,.12);const hold=dur>=.35;
+    return{st,en:st+dur,beats:l,k:KINDS[Math.round(l*12)],hold,state:'wait',ps:null};});
+  maxScore=notes.reduce((a,n)=>a+100+(n.hold?100:0),0);
+}
+let OFF=0;try{OFF=+localStorage.getItem('off2')||0}catch(e){}
+function audio(){if(!ac){ac=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});
+  osc=ac.createOscillator();og=ac.createGain();osc.type='triangle';osc.frequency.value=440;og.gain.value=0;osc.connect(og).connect(ac.destination);osc.start();
+  mbus=ac.createGain();mbus.gain.value=.9;mbus.connect(ac.createDynamicsCompressor()).connect(ac.destination);
+  nbuf=ac.createBuffer(1,ac.sampleRate*.3,ac.sampleRate);const nd=nbuf.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1}
+  if(ac.state==='suspended')ac.resume()}
+function heard(ts){const o=ac.getOutputTimestamp?ac.getOutputTimestamp():null;
+  if(o&&o.contextTime>0&&o.performanceTime>0)return o.contextTime+(ts-o.performanceTime)/1000;
+  return ac.currentTime+(ts-performance.now())/1000-(ac.outputLatency||0)}
+const T=ts=>heard(ts)-aT0-OFF/1000;
+function click(time,accent){const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=accent?1400:900;o.type='square';
+  g.gain.setValueAtTime(.05,time);g.gain.exponentialRampToValueAtTime(.001,time+.05);o.connect(g).connect(ac.destination);o.start(time);o.stop(time+.06)}
+
+// ---- บทเรียน: สอนทีละโน้ต แล้วให้ฝึกที่ 60 BPM ----
+const rep=(st,l,n)=>Array.from({length:n},(_,i)=>[st+i*l,l]);
+let LESSON=null,TI=0,CI=4;
+const LESSONS=[
+ {k:12,ch:()=>rep(0,1,8),a:'ตัวดำ หัวโน้ตทึบ มีก้าน ค่า 1 จังหวะ เป็นหน่วยพื้นฐานที่ใช้เทียบกับโน้ตทุกตัว',h:'กดค้างพอดี 1 จังหวะ นับ "1" แล้วปล่อยก่อนถึงตัวถัดไปเล็กน้อย',t:'เคาะเท้าตามจังหวะไปด้วย แล้วกดทุกครั้งที่เท้าแตะพื้น'},
+ {k:24,ch:()=>rep(0,2,4),a:'ตัวขาว หัวโน้ตกลวง มีก้าน ค่า 2 จังหวะ เท่ากับตัวดำ 2 ตัว',h:'กดค้าง 2 จังหวะ นับในใจ "1 – 2" แล้วปล่อยตอนท้ายโน้ตถึงเส้นชมพู',t:'หัวกลวงแปลว่ายาวกว่าหัวทึบ ยิ่งยาวยิ่งต้องกดค้างนาน'},
+ {k:48,ch:()=>rep(0,4,2),a:'ตัวกลม หัวโน้ตกลวง ไม่มีก้าน ค่า 4 จังหวะ เต็มหนึ่งห้องในจังหวะ 4/4',h:'กดค้างยาว 4 จังหวะ นับ "1 – 2 – 3 – 4" แล้วปล่อย',t:'ไม่มีก้านคือจุดสังเกตของตัวกลม'},
+ {k:6,ch:()=>rep(0,.5,16),a:'เขบ็ตชั้นเดียว หัวโน้ตทึบ มีก้านและหาง 1 เส้น ค่า ½ จังหวะ ตัวดำ 1 ตัวแบ่งได้ 2 ตัว',h:'แตะสั้น ๆ ทีละตัว นับ "1 & 2 & 3 & 4 &" ตัวเลขคือตรงจังหวะ ส่วน & คือครึ่งจังหวะ',t:'หางหนึ่งเส้นคือแบ่งครึ่ง'},
+ {k:36,ch:()=>[[0,3],[3,1],[4,3],[7,1]],a:'ตัวขาวประจุด คือตัวขาวที่มีจุดต่อท้าย จุดเพิ่มค่าอีกครึ่งหนึ่งของโน้ตนั้น 2 + 1 = 3 จังหวะ',h:'กดค้าง 3 จังหวะ ("1 – 2 – 3") แล้วตามด้วยตัวดำ 1 จังหวะให้ครบห้อง',t:'ดูจุดข้างหัวโน้ตเสมอ จุดทำให้โน้ตยาวขึ้น 1.5 เท่า'},
+ {k:18,ch:()=>[[0,1.5],[1.5,.5],[2,1.5],[3.5,.5],[4,1.5],[5.5,.5],[6,1.5],[7.5,.5]],a:'ตัวดำประจุด ค่า 1 + ½ = 1½ จังหวะ มักตามด้วยเขบ็ตชั้นเดียว ½ จังหวะให้ครบ 2 จังหวะ',h:'กดค้าง 1½ จังหวะ (นับ "1 –") แล้วแตะสั้น ๆ ตัวที่สองตรงคำว่า "&"',t:'จังหวะยาว-สั้นแบบนี้พบบ่อยในเพลงป็อป'},
+ {k:4,ch:()=>[[0,1],...rep(1,1/3,3),[2,2],...rep(4,1/3,3),[5,1],[6,2]],a:'ทริปเล็ต แบ่ง 1 จังหวะออกเป็น 3 ส่วนเท่ากัน มีเลข 3 กำกับ แต่ละตัวยาว ⅓ จังหวะ',h:'แตะ 3 ครั้งเว้นห่างเท่ากันใน 1 จังหวะ นับ "1 – la – li" หรือ "ทริ – เปิ้ล – เล็ต"',t:'ต่างจากเขบ็ตคู่ที่มี 2 ตัวต่อจังหวะ ทริปเล็ตมี 3 ตัว'},
+ {k:3,ch:()=>[...rep(0,.25,4),[1,1],...rep(2,.25,4),[3,1],[4,1],...rep(5,.25,4),[6,1],[7,1]],a:'เขบ็ตสองชั้น มีหาง 2 เส้น ค่า ¼ จังหวะ แบ่ง 1 จังหวะเป็น 4 ตัว',h:'แตะเร็ว ๆ 4 ครั้งต่อจังหวะ นับ "1 e & a 2 e & a"',t:'บทนี้เร็วที่สุด ฝึกที่ 60 BPM ก่อนแล้วค่อยไปเล่นระดับยาก'}];
+function drawDemo(L){const c=$('demo'),x=c.getContext('2d'),PPB=120,x0=36,Wd=c.width;x.clearRect(0,0,Wd,c.height);
+  for(let i=0;i<=4;i++){const xx=x0+i*PPB;x.strokeStyle='rgba(243,239,230,.2)';x.lineWidth=i%4===0?2:1;x.beginPath();x.moveTo(xx,20);x.lineTo(xx,142);x.stroke();
+    if(i<4){x.fillStyle='#f3efe6';x.font='800 15px Kanit,sans-serif';x.fillText(i+1,xx+6,16)}}
+  x.strokeStyle='rgba(243,239,230,.7)';x.lineWidth=1.5;x.beginPath();x.moveTo(0,104);x.lineTo(Wd,104);x.stroke();
+  for(const [st,l] of L.ch()){if(st>=4-1e-6)continue;const xx=x0+st*PPB,w=Math.max(l*PPB-6,12),f=st%1;
+    x.fillStyle=l>=.6?'#3ddbb0':'#ffd166';x.beginPath();x.roundRect?x.roundRect(xx,28,w,22,8):x.rect(xx,28,w,22);x.fill();
+    glyph(x,xx+8,104,KINDS[Math.round(l*12)],'#f3efe6',1);
+    const lab=f<.01||f>.99?String(Math.round(st)+1):Math.abs(f-.5)<.01?'&':Math.abs(f-.25)<.01?'e':Math.abs(f-.75)<.01?'a':Math.abs(f-1/3)<.01?'la':'li';
+    x.fillStyle=lab.match(/^\d/)?'#f3efe6':'#8a9aa8';x.font='600 14px Kanit,sans-serif';x.fillText(lab,xx+2,140)}}
+const MENU_P=$('ovp').textContent;
+function showTut(i){TI=i;const L=LESSONS[i],k=KINDS[L.k];$('tn').textContent='บทที่ '+(i+1)+'/'+LESSONS.length;$('tt').textContent=k.n+' · '+k.b+' จังหวะ';
+  $('t1').textContent=L.a;$('t2').textContent='วิธีกด: '+L.h;$('t3').textContent='เคล็ดลับ: '+L.t;
+  $('tprev').disabled=i===0;$('tnext').disabled=i===LESSONS.length-1;drawDemo(L);$('stage').hidden=true;$('pad').hidden=true;$('tut').hidden=false}
+function menu(){LESSON=null;$('ovt').textContent='พร้อมไหม?';$('rk').style.display='none';$('ovp').textContent=MENU_P;$('go').textContent='เริ่มเล่น';
+  $('nxt').hidden=true;$('tbtn').textContent='เรียนรู้ทีละโน้ต';$('tut').hidden=true;$('stage').hidden=false;$('pad').hidden=false;$('ov').classList.remove('hide')}
+// ---- เพลงประกอบ: จังหวะเดิม แต่สุ่มคอร์ดใหม่ทุกรอบ (วนวลี 4 ห้อง 2 รอบ) ----
+const EV=[0,2,4,6,8,10,12,14];
+const M={C:[60,64,67],Dm:[50,53,57],Em:[52,55,59],F:[53,57,60],G:[55,59,62],Am:[57,60,64]};
+const NEXT={C:['F','G','Am','Dm','Em'],Dm:['G','Am','F','C'],Em:['Am','F','Dm','C'],F:['G','C','Dm','Am'],G:['C','Am','Em','F'],Am:['F','Dm','G','Em']};
+const G={k:[0,8],k2:[6],kv:.7,s:[4,12],sv:.35,sd:.14,sh:1200,h:EV,hv:.07,hd:.04,hh:7000,b:[0,6,8,11],bi:[0,0,0,2],bw:'triangle',bv:.24,bd:.55,c:EV,cw:'triangle',cv:.09,cd:.22,pd:.035};
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+let PROG=['C','Am','F','G'],CP=[],musOn=false,aT0=0,nextStep=0,mbus=null,nbuf=null;
+function genProg(){const n=[Math.random()<.5?'C':'Am'];while(n.length<4){const o=NEXT[n[n.length-1]];n.push(o[Math.floor(Math.random()*o.length)])}
+  PROG=n;CP=[...n,...n].map(x=>M[x])}
+genProg();
+function tn(f,time,dur,vol,type){const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(.0001,time);g.gain.linearRampToValueAtTime(vol,time+.008);g.gain.exponentialRampToValueAtTime(.0001,time+dur);
+  o.connect(g).connect(mbus);o.start(time);o.stop(time+dur+.02)}
+function nz(time,dur,vol,hp){const b=ac.createBufferSource();b.buffer=nbuf;const f=ac.createBiquadFilter();f.type='highpass';f.frequency.value=hp;
+  const g=ac.createGain();g.gain.setValueAtTime(vol,time);g.gain.exponentialRampToValueAtTime(.0001,time+dur);b.connect(f).connect(g).connect(mbus);b.start(time);b.stop(time+dur+.02)}
+function kick(time,v){const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(160,time);o.frequency.exponentialRampToValueAtTime(45,time+.12);
+  g.gain.setValueAtTime(v,time);g.gain.exponentialRampToValueAtTime(.0001,time+.22);o.connect(g).connect(mbus);o.start(time);o.stop(time+.25)}
+function mstep(n,time){
+  if(n>=128){const ch=CP[0];kick(time,.7);ch.forEach(m=>tn(mtof(m),time,BEAT*2,.08,'triangle'));tn(mtof(ch[0]-24),time,BEAT*2,.22,'sine');return}
+  const bar=n>>4,st=n&15,ch=CP[bar];
+  if(G.k.includes(st)||(bar%2===1&&G.k2.includes(st)))kick(time,G.kv);
+  if(G.s.includes(st)){nz(time,G.sd,G.sv,G.sh);tn(190,time,.08,.12,'triangle')}
+  if(G.h.includes(st))nz(time,G.hd,st%4===2?G.hv*1.6:G.hv,G.hh);
+  G.b.forEach((bs,j)=>{if(bs===st)tn(mtof(ch[G.bi[j]]-12),time,BEAT*G.bd,G.bv,G.bw)});
+  if(G.c.includes(st))tn(mtof(ch[(st/2)%3]),time,G.cd,G.cv,G.cw);
+  if(st===0)ch.forEach(m=>tn(mtof(m),time,BEAT*3.6,G.pd,'sine'))}
+function sched(){const sd=BEAT/4;
+  while(nextStep<=128){const tm=aT0+nextStep*sd;if(tm>ac.currentTime+.25)break;
+    if(tm>=ac.currentTime-.05){const n=nextStep;
+      if(n<0){if(n%4===0)click(tm,n===-CI*4)}
+      else if(musOn)mstep(n,tm);
+      else if(n<128&&n%4===0)click(tm,n%16===0)}
+    nextStep++}}
+function setTone(n){if(!osc)return;let f=440;
+  if(musOn){const bar=n?Math.min(7,Math.floor(n.st/(4*BEAT))):Math.max(0,Math.min(7,Math.floor(t/(4*BEAT))));
+    const i=n?notes.indexOf(n):0;f=mtof(CP[bar][i%3]+12+(n&&i%6>=3?12:0))}
+  osc.frequency.setValueAtTime(f,ac.currentTime)}
+function toneOn(){if(og)og.gain.setTargetAtTime(.18,ac.currentTime,.004)}
+function toneOff(){if(og)og.gain.setTargetAtTime(0,ac.currentTime,.012)}
+
+function start(){audio();if(LESSON!==null){BPM=60;K=1.3}else{const d=DIFFS[DIF];K=d.k;BPM=d.bpm[0]+5*Math.floor(Math.random()*((d.bpm[1]-d.bpm[0])/5+1))}BEAT=60/BPM;SPEED=PXBEAT/BEAT;$('bpm').textContent=BPM;build();score=0;combo=0;active=null;fb=null;counts={Perfect:0,Good:0,OK:0,Miss:0};lastBeat=-99;
+  t0=performance.now()+4*BEAT*1000;musOn=LESSON===null&&$('mus').checked;genProg();$('gn').textContent=musOn?PROG.join(' – '):'ปิดเพลง';CI=LESSON!==null?2:4;aT0=ac.currentTime+CI*BEAT+.1;nextStep=-CI*4;t=-CI*BEAT;state='play';$('ov').classList.add('hide');upd();requestAnimationFrame(loop)}
+function upd(){$('sc').textContent=Math.round(score);$('cb').textContent=combo}
+
+function label(d,w){return d<=w[0]?['เป๊ะ!','Perfect',100]:d<=w[1]?['ดี','Good',70]:d<=w[2]?['พอใช้','OK',40]:null}
+function say(txt,col){fb={txt,col,at:performance.now()}}
+function hit(n,pts,name,txt){score+=pts;counts[name]++;
+  if(name==='Miss'){combo=0;say(txt||'พลาด','#ff5d8f')}else{combo++;say(txt||name,name==='Perfect'?'#ffd166':name==='Good'?'#3ddbb0':'#8a9aa8')}upd()}
+
+function press(ts){
+  if(state!=='play'||down)return;t=T(ts);down=true;$('pad').classList.add('on');
+  let best=null,bd=9;for(const n of notes){if(n.state!=='wait')continue;const d=Math.abs(t-n.st);if(d<bd){bd=d;best=n}}
+  setTone(best&&bd<=.26*K?best:null);toneOn();
+  if(best&&bd<=.26*K){const r=label(bd,[.07*K,.14*K,.26*K]);best.ps=r[2];
+    if(best.hold){best.state='held';active=best;hit(best,r[2],r[1],(t<best.st?'เร็ว ':'ช้า ')+(r[1]==='Perfect'?'เป๊ะ!':r[0]));if(r[1]==='Perfect')fb.txt='เป๊ะ!'}
+    else{best.state='done';hit(best,r[2],r[1],r[1]==='Perfect'?'เป๊ะ!':(t<best.st?'เร็วไป':'ช้าไป'))}
+  }else{combo=0;say('กดผิดจังหวะ','#ff5d8f');upd()}
+}
+function release(ts){
+  if(!down)return;if(state==='play')t=T(ts);down=false;$('pad').classList.remove('on');toneOff();
+  if(active&&state==='play'){const n=active;active=null;const d=Math.abs(t-n.en);const r=label(d,[.1*K,.2*K,.32*K]);n.state='done';
+    if(r){hit(n,r[2],r[1],r[1]==='Perfect'?'ปล่อยเป๊ะ!':(t<n.en?'ปล่อยเร็วไป':'ปล่อยช้าไป'))}
+    else{hit(n,0,'Miss',t<n.en?'ปล่อยเร็วเกินไป':'ค้างนานเกินไป')}}
+}
+addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();if(!e.repeat)press(e.timeStamp)}});
+addEventListener('keyup',e=>{if(e.code==='Space'){e.preventDefault();release(e.timeStamp)}});
+let ptr=null;
+for(const el of [cv,$('pad')]){el.addEventListener('pointerdown',e=>{e.preventDefault();if(down)return;ptr=e.pointerId;press(e.timeStamp)});
+  el.addEventListener('contextmenu',e=>e.preventDefault())}
+const up=e=>{if(e.pointerId===ptr){ptr=null;release(e.timeStamp)}};addEventListener('pointerup',up);addEventListener('pointercancel',up);
+
+function loop(){
+  if(state!=='play')return;
+  t=T(performance.now());sched();
+  const b=Math.floor(t/BEAT);lastBeat=b;
+  for(const n of notes){
+    if(n.state==='wait'&&t>n.st+.26*K){n.state='done';hit(n,0,'Miss','พลาด')}
+    if(n.state==='held'&&t>n.en+.32*K){active=null;n.state='done';hit(n,0,'Miss','ค้างนานเกินไป')}
+  }
+  draw();
+  if(t>notes[notes.length-1].en+1.2){finish();return}
+  requestAnimationFrame(loop);
+}
+function finish(){state='end';if(down){toneOff()}
+  const acc=score/maxScore*100,rk=acc>=90?'S':acc>=75?'A':acc>=55?'B':'C';
+  $('ovt').textContent='จบเพลง';$('rk').style.display='block';$('rk').textContent=rk;
+  $('ovp').textContent=`ระดับ${DIFFS[DIF].n} · ความเร็ว ${BPM} BPM · ความแม่นยำ ${acc.toFixed(0)}% · เป๊ะ ${counts.Perfect} · ดี ${counts.Good} · พอใช้ ${counts.OK} · พลาด ${counts.Miss}`;
+  $('go').textContent='เล่นอีกครั้ง';
+  if(LESSON!==null){const L=LESSONS[LESSON];$('ovt').textContent='จบบทที่ '+(LESSON+1)+': '+KINDS[L.k].n;
+    $('ovp').textContent='ความแม่นยำ '+acc.toFixed(0)+'% · เป๊ะ '+counts.Perfect+' · ดี '+counts.Good+' · พอใช้ '+counts.OK+' · พลาด '+counts.Miss+(acc>=60?'':' — ลองอ่านบทเรียนอีกครั้งแล้วฝึกใหม่');
+    $('nxt').hidden=LESSON>=LESSONS.length-1;$('tbtn').textContent='กลับไปอ่านบทเรียน'}
+  $('ov').classList.remove('hide');}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);const cy=100,ys=232,LT='#f3efe6';
+  const b0=Math.floor(t/BEAT);
+  for(let i=b0;i<b0+Math.ceil(W/(SPEED*BEAT))+2;i++){const x=HITX+(i*BEAT-t)*SPEED;if(x<0)continue;
+    ctx.strokeStyle=i%4===0?'rgba(243,239,230,.22)':'rgba(243,239,230,.08)';ctx.lineWidth=i%4===0?2:1;ctx.beginPath();ctx.moveTo(x,24);ctx.lineTo(x,H-18);ctx.stroke()}
+  ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(0,cy-LANE/2-6,W,LANE+12);
+  ctx.strokeStyle=LT;ctx.lineWidth=1.5;ctx.globalAlpha=.7;ctx.beginPath();ctx.moveTo(0,ys);ctx.lineTo(W,ys);ctx.stroke();ctx.globalAlpha=1;
+  for(const n of notes){
+    const x=HITX+(n.st-t)*SPEED,w=(n.en-n.st)*SPEED;
+    if(x>W+20||x+w<-30)continue;
+    const col=n.hold?'#3ddbb0':'#ffd166',done=n.state==='done';
+    ctx.globalAlpha=done?.3:1;ctx.fillStyle=col;rr(x,cy-LANE/2,Math.max(w,26),LANE,12);ctx.fill();
+    if(n.state==='held'){ctx.globalAlpha=.9;ctx.fillStyle='#fff';const pw=Math.max(0,Math.min(HITX-x,w));if(pw>2){rr(x,cy-LANE/2+6,pw,LANE-12,8);ctx.shadowColor=col;ctx.shadowBlur=16;ctx.fill();ctx.shadowBlur=0}}
+    if(w>=46){ctx.globalAlpha=done?.3:1;ctx.fillStyle='#101820';ctx.font='800 18px Kanit,sans-serif';ctx.textBaseline='middle';ctx.fillText(n.k.b,x+10,cy+1)}
+    ctx.globalAlpha=done?.35:1;glyph(ctx,x,ys,n.k,n.state==='held'?col:LT);ctx.globalAlpha=1;
+  }
+  for(let i=Math.ceil(t/(4*BEAT));i<Math.ceil(t/(4*BEAT))+Math.ceil(W/(SPEED*BEAT*4))+2;i++){const x=HITX+(i*4*BEAT-t)*SPEED-14;if(x<30)continue;ctx.strokeStyle=LT;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,ys-22);ctx.lineTo(x,ys+22);ctx.stroke()}
+  ctx.fillStyle=LT;ctx.font='800 24px Kanit,sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('4',24,ys-2);ctx.fillText('4',24,ys+22);ctx.textAlign='left';
+  ctx.strokeStyle='#ff5d8f';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(HITX,cy-LANE/2-22);ctx.lineTo(HITX,ys+40);ctx.stroke();
+  ctx.lineWidth=2;ctx.beginPath();ctx.arc(HITX,cy,LANE/2+10,0,7);ctx.globalAlpha=down?.9:.35;ctx.stroke();ctx.globalAlpha=1;
+  if(t<0){const c=Math.ceil(-t/BEAT);ctx.fillStyle=LT;ctx.font='800 64px Kanit,sans-serif';ctx.textAlign='center';ctx.fillText(c,W/2+60,cy+22);ctx.textAlign='left'}
+  if(fb){const a=(performance.now()-fb.at)/700;if(a<1){ctx.globalAlpha=1-a;ctx.fillStyle=fb.col;ctx.font='600 22px Kanit,sans-serif';ctx.fillText(fb.txt,HITX-40,cy-LANE/2-30-a*14);ctx.globalAlpha=1}}
+  const nx=notes.find(n=>n.state==='wait'||n.state==='held');const el=$('nx'),tx=nx?nx.k.n+' · '+nx.k.b+' จังหวะ':'-';if(el.textContent!==tx)el.textContent=tx;
+}
+function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+$('go').addEventListener('click',()=>{$('rk').style.display='none';start()});
+function setDif(d){DIF=d;document.querySelectorAll('#dif button').forEach(b=>b.setAttribute('aria-checked',b.dataset.d===d));$('dsc').textContent=DIFFS[d].d;try{localStorage.setItem('dif',d)}catch(e){}}
+document.querySelectorAll('#dif button').forEach(b=>b.addEventListener('click',()=>{setDif(b.dataset.d);b.blur()}));
+$('rnd').addEventListener('change',e=>e.target.blur());$('mus').addEventListener('change',e=>e.target.blur());
+
+$('tbtn').addEventListener('click',()=>showTut(LESSON===null?0:LESSON));
+$('nxt').addEventListener('click',()=>{LESSON++;showTut(LESSON)});
+$('tprev').addEventListener('click',()=>showTut(TI-1));$('tnext').addEventListener('click',()=>showTut(TI+1));
+$('tprac').addEventListener('click',()=>{LESSON=TI;$('tut').hidden=true;$('stage').hidden=false;$('pad').hidden=false;$('rk').style.display='none';start()});
+$('tclose').addEventListener('click',menu);
+if(matchMedia('(pointer:coarse)').matches){
+  $('sub').textContent='โน้ตวิ่งมาจากขวา แตะปุ่มด้านล่างตอนหัวโน้ตถึงเส้นชมพู โน้ตยาวให้แตะค้างไว้ตามความยาวแล้วปล่อยตอนท้ายโน้ตถึงเส้น (หมุนเครื่องเป็นแนวนอนจะเห็นโน้ตชัดขึ้น)';
+  $('pad').textContent='แตะค้างที่นี่'}
+$('off').value=OFF;$('offv').textContent=OFF;
+$('off').addEventListener('input',e=>{OFF=+e.target.value;$('offv').textContent=OFF;try{localStorage.setItem('off2',OFF)}catch(_){}});
+$('off').addEventListener('keydown',e=>{if(e.code==='Space')e.stopPropagation()});
+for(const k of [48,36,24,18,12,6,4,3]){const d=document.createElement('div'),c=document.createElement('canvas');c.width=56;c.height=64;
+  glyph(c.getContext('2d'),20,52,KINDS[k],'#f3efe6');d.append(c);d.insertAdjacentHTML('beforeend','<b>'+KINDS[k].n+'</b>'+KINDS[k].b+' จังหวะ');$('leg').append(d)}
+draw();
+</script>
+</body>
+</html>
